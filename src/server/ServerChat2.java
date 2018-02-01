@@ -10,15 +10,16 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-public class ServerChat {
+public class ServerChat2 {
 	ServerSocket serverSocket;
 	Scanner scanner;
 	ArrayList<DataOutputStream> list;
+	String chatid;
 	
-	public ServerChat() {
+	public ServerChat2() {
 	}
 
-	public ServerChat(int port) {
+	public ServerChat2(int port) {
 		try {
 			serverSocket = new ServerSocket(port);
 			System.out.println("Ready Server ...");
@@ -36,6 +37,7 @@ public class ServerChat {
 			Socket socket = serverSocket.accept();
 			System.out.println(socket.getInetAddress()+" Connected..");
 			Receiver receiver = new Receiver(socket);
+			chatid = socket.getInetAddress().getHostAddress();
 			receiver.start();
 		}
 	}
@@ -76,7 +78,7 @@ public class ServerChat {
 
 	}
 
-	// Message Receiver ..................................... // client 당 Receiver
+	// Message Receiver .....................................
 	class Receiver extends Thread {
 		InputStream in;
 		DataInputStream din;
@@ -101,22 +103,33 @@ public class ServerChat {
 
 		@Override
 		public void run() {
-			while (true) {
-				String msg = null;
+			String name = "";
+			try {
+				name = din.readUTF();
+				sendAllMsg("#"+name+"님이 들어오셨습니다.");
+				
+				while(in!=null) {
+					sendAllMsg(din.readUTF());
+				}
+			} catch(IOException e) {
+				// ignore
+			} finally {
 				try {
-					msg = din.readUTF();
-					System.out.println("client:"+msg);
-					sendAllMsg(msg);
+					sendAllMsg("#"+name+"님이 나가셨습니다.");
 				} catch (IOException e) {
-					System.out.println("Exit Client User ...");
-					break;				
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				list.remove(name);
+				System.out.println("["+socket.getInetAddress() +":"+socket.getPort()+"]"+"에서 접속을 종료하였습니다.");
+				System.out.println("현재 서버접속자 수는 "+ list.size()+"입니다.");	
 				}
 
 			}
 		}
 	}
 
-}
+
 
 
 
